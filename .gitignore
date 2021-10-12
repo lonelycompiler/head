@@ -1,8 +1,11 @@
+# vscode foler
+.vscode
+
 # Prerequisites
 *.d
 
 # Object files
-./head
+head
 *.o
 *.ko
 *.obj
