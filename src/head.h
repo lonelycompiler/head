@@ -28,4 +28,23 @@ exit_bc_failure(char *str)
     _exit(EXIT_FAILURE);
 }
 
+/* This shows what flags have been given */
+typedef enum
+{
+    no_flags,
+    count_lines_flag,
+    count_bytes_flag
+} FLAG;
+
+/* Use the Flag Type, Number of Lines to spew, and bytes to read in
+   to handle any functions */
+typedef struct
+{
+    FLAG flag;
+    int countlines;
+    int countbytes;
+
+} Transaction;
+
+
 #endif
