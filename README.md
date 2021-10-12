@@ -2,7 +2,6 @@
 
 This is a clone of the head system program command, but it only works for one file.
 Here is the man file for it that has been modified to show that it only works for one input file.
-Head doesn't need input also!
 
 ---
 **HEAD**
