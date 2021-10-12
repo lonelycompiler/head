@@ -7,31 +7,24 @@ If a valid flag is given, it'll print x amount of lines/bytes of the file
 
 #include "head.h"
 
-/* takes whatever is given in stdin and prints it to stdout (the screen)
-   Will go for linecount number of times.*/
-void 
-stdin_to_stdout_with_count(int linecount)
-{
-    char buffer[MAX_BUFFER_SIZE];
-    for (int counter = 0; counter < linecount; counter++)
-    {
-        scanf("%s",buffer);
-        printf("%s\n",buffer);
-    }
-    exit_success();
-}
+Transaction head_t;
+/*
+    Takes whatever is given in stdin and prints it to stdout (the screen).
+    While loop means only SIGKILL can end it 
+    Uses linecount and bytecount to read
+*/
 
-/* takes whatever is given in stdin and prints it to stdout (the screen).
-   While loop means only SIGKILL can end it */
 void 
 stdin_to_stdout(void)
 {
     char buffer[MAX_BUFFER_SIZE];
-    while(true)
+    int bytenum = 0;
+    while (int counter = 0; counter < head_t.countlines && bytenum < head_t.bytecount; counter++)
     {
-        scanf("%s",buffer);
+        scanf("%s%n",buffer, &counter);
         printf("%s\n",buffer);
     }
+    exit_success();
 }
 
 /* prints usage is incorrect and exits program*/
@@ -45,9 +38,12 @@ incorrect_usage(void)
 int
 main(int argc, char *argv[])
 {
+    head_t.flag = no_flags;
+    head_t.countlines = 10;
+    head_t.countbytes = MAX_BUFFER_SIZE;
+
     printf("entered main function\n");
     /* if countlines=0, countbytes is the argument */
-    int countlines = 10;
     bool flags = false;
 
     /* if no flags or textfile given */
@@ -59,21 +55,38 @@ main(int argc, char *argv[])
     /* is the first argument a flag?? */
     if (argv[1][0] == '-')
     {
-        flags = true;
         /* check if flag is valid, '-n' or '-c' */
         if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "-n") == 0 )
         {
             if (strcmp(argv[1], "-c") == 0)
             {
-                countlines = false;
+                head_t.flag = count_bytes_flag;
+                /* assuming its an int, reads arg 2's bytes from file */
+                head_t.countbytes = atoi(argv[2]);
+
+                /* Error handling, if next argument isn't an integer */
+                if (head_t.countbytes <= 0)
+                {
+                    char err_msg[MAX_BUFFER_SIZE];
+                    strcpy(err_msg, "head: byte line count -- ");
+                    strcat(err_msg, argv[2]);
+                    exit_bc_failure(err_msg);
+                }
+
+                /* if there's no file provided */
+                if (argc == 3)
+                {
+                    stdin_to_stdout();
+                }
             }
             else
             {
+                head_t.flag = count_lines_flag;
                 /* count lines flag works */
-                countlines = atoi(argv[2]);
+                head_t.countlines = atoi(argv[2]);
 
                 /* Error handling, if next argument isn't an integer */
-                if (countlines <= 0)
+                if (head_t.countlines <= 0)
                 {
                     char err_msg[MAX_BUFFER_SIZE];
                     strcpy(err_msg, "head: illegal line count -- ");
@@ -84,7 +97,7 @@ main(int argc, char *argv[])
                 /* if there's no file provided */
                 if (argc == 3)
                 {
-                    stdin_to_stdout_with_count(countlines);
+                    stdin_to_stdout();
                 }
             }
         }
@@ -102,26 +115,27 @@ main(int argc, char *argv[])
 
     char filename[100];
 
-    /* If there are flags, -n or -c */
+    /* If there are valid flags, test file is third arg */
     if (flags == true)
     {
         strcpy(filename, argv[3]);
     }
     else
     {
+        /* Test file is first arg */
         strcpy(filename, argv[1]);
     }
+
     // open file as read only
     int fd;
     fd = open(filename, O_RDONLY);
     if (fd == -1)
         exit_bc_failure("file could not be opened!");
-
-    // read file from file descriptor
-    char buffer[MAX_BUFFER_SIZE];
-    if (read(fd, buffer, MAX_BUFFER_SIZE-1) == -1)
-        exit_bc_failure("file could not be read!");
-
+        /* if counting lines */
+        // read file from file descriptor
+        char buffer[MAX_BUFFER_SIZE];
+        if (read(fd, buffer, head_t.countbytes-1) == -1)
+            exit_bc_failure("file could not be read!");
     int currentLine = 1;
     int i;
     // start reading file
