@@ -48,13 +48,9 @@ stdin_to_stdout(void)
             bytes to read will read half of bytes to count
             and those bytes are then printed
         */
-        if (bytes_to_read %2 != 0)
-            bytes_to_read = (bytes_to_read+1) / 2;
-        else
-            bytes_to_read = (bytes_to_read) / 2;
 
         /* this is input initialized */
-        char buf[bytes_to_read+1];
+        char buf[MAX_BUFFER_SIZE];
 
         /* initialize strings */
         strcpy(buf, "");
@@ -71,16 +67,18 @@ stdin_to_stdout(void)
             /* loop through string */
             for (int i = 0; buf[i] != '\0'; i++)
             {
-                if (bytes_to_read > 0)
-                    strncat(temp_buffer, &buf[i], 1);
+                bytes_to_read--;
 
-                if (buf[i] != '\n')
-                    bytes_to_read--;
-                //printf("temp=%s\n*temp=%c\nbytes_to_read=%d\n", temp, *temp, bytes_to_read);
+                /* if new line as last character, remove it, because
+                   at line 80 we do newline anyhow :/ */
+                if (bytes_to_read == 0 && buf[i] == '\n') buf[i] = '\0';
+                
+                strncat(temp_buffer, &buf[i], 1);
+                if (bytes_to_read == 0) break;
             }
         }
+        printf("%s\n",temp_buffer);
     }
-    printf("%s", temp_buffer);
     exit_success();
 }
 
