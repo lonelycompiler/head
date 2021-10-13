@@ -31,45 +31,56 @@ stdin_to_stdout(void)
     }
     else if(head_status.flag == count_lines_flag)
     {
+        /* gets input and prints output only up to the set # of lines */
         for (int line = 0; line < head_status.countlines; line++)
         {
             fgets(temp_buffer, sizeof temp_buffer, stdin);
             printf("%s", temp_buffer);
         }
+        strcpy(temp_buffer, "");
     }
     else
     {
         int bytes_to_read = head_status.countbytes;
         
-        /* if # of bytes is odd */
+        /*
+            if # of bytes is odd 
+            bytes to read will read half of bytes to count
+            and those bytes are then printed
+        */
         if (bytes_to_read %2 != 0)
             bytes_to_read = (bytes_to_read+1) / 2;
         else
             bytes_to_read = (bytes_to_read) / 2;
 
-        char buf[bytes_to_read+1]; // +1 is \0
+        /* this is input initialized */
+        char buf[bytes_to_read+1];
+
+        /* initialize strings */
         strcpy(buf, "");
         strcpy(temp_buffer, "");
-        printf("bytes_to_read=%d\n", bytes_to_read);
 
-        while (fgets(buf, sizeof buf, stdin) != NULL && bytes_to_read > 0)
+        /*
+            input is first gotten, 
+            then it is counted line by line,
+            upto bytes_to_read
+            printed after while
+        */
+        while (bytes_to_read > 0 && fgets(buf, sizeof buf, stdin) != NULL)
         {
-            if (strlen(buf) )
-            printf("strlen(buf)=%d\n", (int) strlen(buf));
-
-            for (int i = 0; i < strlen(buf)-1; i++)
+            /* loop through string */
+            for (int i = 0; buf[i] != '\0'; i++)
             {
-                bytes_to_read--;
-                char temp = i;
-                buf[i+1] = '\0';
-                printf("buf=%s,temp=%s\n", buf, temp_buffer);
-                strcat(temp_buffer, buf);
-                buf[i+1] = temp;
+                if (bytes_to_read > 0)
+                    strncat(temp_buffer, &buf[i], 1);
+
+                if (buf[i] != '\n')
+                    bytes_to_read--;
+                //printf("temp=%s\n*temp=%c\nbytes_to_read=%d\n", temp, *temp, bytes_to_read);
             }
-            strcat(temp_buffer, "\n");
         }
-        printf("%s", temp_buffer);
     }
+    printf("%s", temp_buffer);
     exit_success();
 }
 
@@ -172,29 +183,29 @@ main(int argc, char *argv[])
         strcpy(filename, argv[1]);
     }
 
-    // open file as read only
+    /* open file as read only */
     int fd;
     fd = open(filename, O_RDONLY);
     if (fd == -1)
         exit_bc_failure("file could not be opened!");
-        /* if counting lines */
-        // read file from file descriptor
+        /* if counting lines
+           read file from file descriptor */
         char buffer[MAX_BUFFER_SIZE];
         if (read(fd, buffer, head_status.countbytes-1) == -1)
             exit_bc_failure("file could not be read!");
     int currentLine = 1;
     int i;
-    // start reading file
+    /* start reading file */
     for (i = 0; buffer[i] != '\0'; i++)
     {
         printf("%c", buffer[i]);
         
-        // if new line, 
+        /* if new line, */
         if (buffer[i] == '\n')
         {
             currentLine++;
             
-            // edgecase with greater/equal than 2 newlines
+            /* edgecase with greater/equal than 2 newlines */
             if (buffer[i+1] != '\0')
             {
                 if (buffer[i+1] == '\n') { buffer[i+1] = 0; }
