@@ -86,7 +86,7 @@ stdin_to_stdout(void)
 void
 incorrect_usage(void)
 {
-    exit_bc_failure("usage: head [-n lines | -c bytes] file");
+    exit_failure("usage: head [-n lines | -c bytes] file");
 }
 
 /* main shell for head.c */
@@ -99,7 +99,6 @@ main(int argc, char *argv[])
 
     printf("entered main function\n");
     /* if countlines=0, countbytes is the argument */
-    bool flags = false;
 
     /* if no flags or textfile given */
     if (argc == 1)
@@ -125,7 +124,7 @@ main(int argc, char *argv[])
                     char err_msg[MAX_BUFFER_SIZE];
                     strcpy(err_msg, "head: byte line count -- ");
                     strcat(err_msg, argv[2]);
-                    exit_bc_failure(err_msg);
+                    exit_failure(err_msg);
                 }
 
                 /* if there's no file provided */
@@ -146,7 +145,7 @@ main(int argc, char *argv[])
                     char err_msg[MAX_BUFFER_SIZE];
                     strcpy(err_msg, "head: illegal line count -- ");
                     strcat(err_msg, argv[2]);
-                    exit_bc_failure(err_msg);
+                    exit_failure(err_msg);
                 }
 
                 /* if there's no file provided */
@@ -162,55 +161,67 @@ main(int argc, char *argv[])
             char err_msg[MAX_BUFFER_SIZE];
             strcpy(err_msg, "head: illegal option -- ");
             strcat(err_msg, argv[1]);
-            exit_bc_failure(err_msg);
+            exit_failure(err_msg);
         }
     }
 
-    /* At this point, there either is flags + a file, or just a file */
-
-    char filename[100];
-
     /* If there are valid flags, test file is third arg */
-    if (flags == true)
+    if (head_status.flag == count_lines_flag)
     {
-        strcpy(filename, argv[3]);
+        /* open file as read only */
+        int fd;
+        fd = open(argv[1], O_RDONLY);
+        if (fd == -1)
+            exit_failure("file could not be opened!");
+        
+        /* if counting lines
+            read file from file descriptor */
+        char buffer[MAX_BUFFER_SIZE];
+        if (read(fd, buffer, MAX_BUFFER_SIZE) == -1)
+            exit_failure("file could not be read!");
+        int currentLine = 1;
+        int i;
+
+        /* start reading file */
+        for (i = 0; buffer[i] != '\0'; i++)
+        {
+            printf("%c", buffer[i]);
+            
+            /* if new line, */
+            if (buffer[i] == '\n')
+            {
+                currentLine++;
+                
+                /* edgecase with greater/equal than 2 newlines */
+                if (buffer[i+1] != '\0')
+                {
+                    if (buffer[i+1] == '\n') { buffer[i+1] = 0; }
+                    if (currentLine == 11) { break;}
+                }
+            }
+        }
+        if (buffer[i] != '\n') printf("\n");
+    }
+    else if (head_status.flag == count_bytes_flag)
+    {
+        /* open file as read only */
+        int fd;
+        fd = open(argv[3], O_RDONLY);
+        if (fd == -1)
+            exit_failure("file could not be opened!");
+        
+        /* if counting lines
+            read file from file descriptor */
+        char buffer[MAX_BUFFER_SIZE];
+        if (read(fd, buffer, head_status.countbytes) == -1)
+            exit_failure("file could not be read!");
+        
+       printf("%s\n", buffer);
     }
     else
     {
-        /* Test file is first arg */
-        strcpy(filename, argv[1]);
+        exit_failure("");
     }
 
-    /* open file as read only */
-    int fd;
-    fd = open(filename, O_RDONLY);
-    if (fd == -1)
-        exit_bc_failure("file could not be opened!");
-        /* if counting lines
-           read file from file descriptor */
-        char buffer[MAX_BUFFER_SIZE];
-        if (read(fd, buffer, head_status.countbytes-1) == -1)
-            exit_bc_failure("file could not be read!");
-    int currentLine = 1;
-    int i;
-    /* start reading file */
-    for (i = 0; buffer[i] != '\0'; i++)
-    {
-        printf("%c", buffer[i]);
-        
-        /* if new line, */
-        if (buffer[i] == '\n')
-        {
-            currentLine++;
-            
-            /* edgecase with greater/equal than 2 newlines */
-            if (buffer[i+1] != '\0')
-            {
-                if (buffer[i+1] == '\n') { buffer[i+1] = 0; }
-                if (currentLine == 11) { break;}
-            }
-        }
-    }
-    if (buffer[i] != '\n') printf("\n");
     return 0;
 }

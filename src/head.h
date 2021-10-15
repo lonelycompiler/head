@@ -20,9 +20,9 @@ exit_success()
     _exit(0);
 }
 
-/* Exits the program with failure */
+/* Exits the program with failure and prints why */
 void
-exit_bc_failure(char *str)
+exit_failure(char *str)
 {
     printf("ERROR: %s\n", str);
     _exit(EXIT_FAILURE);
